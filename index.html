@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML CI/CD Pipeline - Deployment Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(22, 27, 46, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.35);
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.25);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-cyan: #06b6d4;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.15), transparent 45%),
+                        radial-gradient(circle at 85% 80%, rgba(6, 182, 212, 0.12), transparent 45%),
+                        var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 820px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 2.75rem;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6),
+                        0 0 40px var(--primary-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #6366f1, #06b6d4, #10b981);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .badge-live {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 9999px;
+            padding: 6px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            margin-bottom: 1.25rem;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, #ffffff 30%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-value {
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .accuracy-highlight {
+            color: #34d399;
+            text-shadow: 0 0 20px var(--success-glow);
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 1rem;
+            color: #34d399;
+        }
+
+        .pipeline-flow {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .flow-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.25rem;
+        }
+
+        .stages {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            position: relative;
+        }
+
+        .stage-item {
+            flex: 1;
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            padding: 0.85rem 0.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stage-item.success {
+            background: rgba(16, 185, 129, 0.08);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .stage-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 2px;
+        }
+
+        .stage-sub {
+            font-size: 0.72rem;
+            color: #34d399;
+            font-weight: 600;
+        }
+
+        .arrow {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            user-select: none;
+        }
+
+        .footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--card-border);
+            padding-top: 1.5rem;
+        }
+
+        .footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer a:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 1.75rem 1.25rem;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .stages {
+                flex-direction: column;
+            }
+            .arrow {
+                transform: rotate(90deg);
+            }
+            .stage-item {
+                width: 100%;
+            }
+            .footer {
+                flex-direction: column;
+                gap: 0.75rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="badge-live">
+                <span class="pulse-dot"></span>
+                <span>GitHub Actions CI/CD Active</span>
+            </div>
+            <h1>ML CI/CD Deployment</h1>
+            <p class="subtitle">Automated Continuous Integration and Continuous Deployment pipeline using GitHub Actions & GitHub Pages.</p>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-label">Machine Learning Model</div>
+                <div class="card-value">Random Forest</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Scikit-Learn Classifier (100 Trees)</div>
+            </div>
+
+            <div class="card">
+                <div class="card-label">Dataset Used</div>
+                <div class="card-value">Iris Dataset</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Fisher's 3-Class Iris Dataset (150 Samples)</div>
+            </div>
+
+            <div class="card">
+                <div class="card-label">Model Accuracy</div>
+                <div class="card-value accuracy-highlight">
+                    <span>96.67%</span>
+                </div>
+                <div style="font-size: 0.85rem; color: #34d399; margin-top: 4px;">✓ Surpasses 90.00% benchmark</div>
+            </div>
+
+            <div class="card">
+                <div class="card-label">CI/CD Deployment Status</div>
+                <div class="card-value status-pill">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span>Success (Passed)</span>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Live on GitHub Pages</div>
+            </div>
+        </div>
+
+        <div class="pipeline-flow">
+            <div class="flow-title">Pipeline Architecture (needs: ci)</div>
+            <div class="stages">
+                <div class="stage-item success">
+                    <div class="stage-title">1. Checkout & Setup</div>
+                    <div class="stage-sub">Python 3.11</div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="stage-item success">
+                    <div class="stage-title">2. Train ML Model</div>
+                    <div class="stage-sub">model.py</div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="stage-item success">
+                    <div class="stage-title">3. Automated Tests</div>
+                    <div class="stage-sub">pytest PASS</div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="stage-item success">
+                    <div class="stage-title">4. CD Stage</div>
+                    <div class="stage-sub">needs: [ci] PASS</div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="stage-item success">
+                    <div class="stage-title">5. GitHub Pages</div>
+                    <div class="stage-sub">Deployed</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div>Built for <strong>ML-CICD-Assignment</strong></div>
+            <div>Powered by <strong>GitHub Actions & Pages</strong></div>
+        </div>
+    </div>
+</body>
+</html>
